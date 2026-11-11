@@ -1,6 +1,20 @@
 const { getDashboardOverview, getDashboardStats, getDashboardTrends } = require('../services/dashboardService')
 const { getRegion } = require('../services/regionRouter')
 
+async function root(req, res) {
+  res.status(200).json({
+    success: true,
+    message: 'SKYLINE dashboard API is running',
+    status: 'online',
+    version: '1.0.0',
+    endpoints: {
+      stats: '/api/dashboard/stats',
+      overview: '/api/dashboard/overview',
+      trends: '/api/dashboard/trends',
+    },
+  })
+}
+
 async function stats(req, res) {
   res.json({ data: await getDashboardStats() })
 }
@@ -19,4 +33,4 @@ async function trends(req, res) {
   res.json({ data, count: data.length, range: req.query.range || '24h' })
 }
 
-module.exports = { overview, stats, trends }
+module.exports = { overview, root, stats, trends }
