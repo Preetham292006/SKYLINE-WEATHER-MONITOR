@@ -13,12 +13,32 @@ const errorHandler = require('./middleware/errorHandler')
 
 const app = express()
 
-const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:5173')
+const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:5173,https://skyline-weather-monitor.vercel.app')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean)
 
-app.use(cors({ origin: allowedOrigins }))
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'SKYLINE Weather Intelligence API is running',
+    status: 'online',
+    version: '1.0.0',
+  })
+})
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+      return
+    }
+
+    callback(new Error('Not allowed by CORS'))
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  credentials: false,
+}))
 app.use(express.json({ limit: '1mb' }))
 app.use('/api', healthRoutes)
 app.use('/api/stations', requireDatabase, stationRoutes)
