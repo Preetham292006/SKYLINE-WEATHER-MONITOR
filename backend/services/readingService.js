@@ -44,6 +44,24 @@ async function getRegionalReadingAggregates(models = getWeatherReadingModels()) 
 }
 
 async function getAllReadingStats(models = getWeatherReadingModels()) {
+  const seededDemoReading = {
+    $or: [
+      { $eq: ['$dataSource', 'seeded-demo'] },
+      { $ne: [{ $ifNull: ['$seedKey', null] }, null] },
+    ],
+  }
+  const monitoringSimulationReading = {
+    $or: [
+      { $eq: ['$dataSource', 'monitoring-simulation'] },
+      {
+        $and: [
+          { $eq: ['$simulated', true] },
+          { $eq: [{ $ifNull: ['$seedKey', null] }, null] },
+        ],
+      },
+    ],
+  }
+
   return unionPipeline(models, [
     {
       $group: {
@@ -53,6 +71,22 @@ async function getAllReadingStats(models = getWeatherReadingModels()) {
         averageHumidity: { $avg: '$humidity' },
         averageWindSpeed: { $avg: '$windSpeed' },
         averageRainfall: { $avg: '$rainfall' },
+        seededDemoReadings: { $sum: { $cond: [seededDemoReading, 1, 0] } },
+        monitoringSimulationReadings: { $sum: { $cond: [monitoringSimulationReading, 1, 0] } },
+        unverifiedReadings: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $not: [seededDemoReading] },
+                  { $not: [monitoringSimulationReading] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
       },
     },
   ])

@@ -1,8 +1,8 @@
 # SKYLINE Screenshot Checklist
 
 Capture images directly from the running SKYLINE application. This checklist
-does not contain generated screenshots. Use connected MongoDB data when
-available; if using the offline fallback, keep its demo-data label visible.
+does not contain generated screenshots. Use connected MongoDB data and keep
+the seeded-demo or simulation provenance visible when those records are shown.
 
 ## Capture preparation
 
@@ -10,7 +10,7 @@ available; if using the offline fallback, keep its demo-data label visible.
 - [ ] Confirm the application connection status before capturing database-backed results.
 - [ ] Use a consistent browser zoom and window size; capture a desktop presentation view and, if required, one responsive mobile view.
 - [ ] Hide personal information and any credentials, environment variables, or browser developer tools.
-- [ ] Do not edit values or fabricate chart contents. Note whether the image shows seeded, live database, or labeled demo fallback data.
+- [ ] Do not edit values or fabricate chart contents. Note whether the image shows seeded demonstration, monitoring simulation, or unverified-ingest records.
 - [ ] For benchmark captures, retain the query filters and strategy labels in view and record that results are environment-specific.
 - [ ] Save original captures in a submission folder; document date, viewport, connection state, and any filters used.
 
@@ -41,4 +41,3 @@ Record capture metadata alongside the actual image files:
 | Image filename | Page | Capture date/time | Viewport | Data source / state | Filters or notes |
 |---|---|---|---|---|---|
 | _Fill in after capturing_ | | | | | |
-

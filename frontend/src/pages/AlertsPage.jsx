@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Check, CheckCheck, CircleAlert, Filter, ShieldAlert } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import Panel from '../components/Panel.jsx'
-import { regionDefinitions, timeAgo } from '../data/mockData.js'
+import { regionDefinitions, timeAgo } from '../data/displayData.js'
 import { useAppData } from '../hooks/useAppData.js'
 
 const severityCopy = { critical: 'Critical', warning: 'Warning', information: 'Information' }

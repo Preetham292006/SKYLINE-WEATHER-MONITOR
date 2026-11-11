@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MapPin, X } from 'lucide-react'
-import { regionDefinitions, timeAgo } from '../data/mockData.js'
+import { regionDefinitions, timeAgo } from '../data/displayData.js'
 
 function StationModal({ station, onClose, onAdd }) {
   const [name, setName] = useState('')
@@ -33,12 +33,13 @@ function StationModal({ station, onClose, onAdd }) {
             <div className="detail-item"><span>Coordinates</span><strong>{station.lat.toFixed(4)}°, {station.lon.toFixed(4)}°</strong></div>
             <div className="detail-item"><span>Connection status</span><strong className={`detail-status-${station.status}`}>{station.status[0].toUpperCase() + station.status.slice(1)}</strong></div>
             <div className="detail-item"><span>Last reading</span><strong>{timeAgo(station.minutesAgo)}</strong></div>
-            <div className="detail-item"><span>Temperature</span><strong>{station.temperature.toFixed(1)} °C</strong></div>
-            <div className="detail-item"><span>Humidity</span><strong>{station.humidity}%</strong></div>
-            <div className="detail-item"><span>Wind speed</span><strong>{station.wind.toFixed(1)} m/s</strong></div>
-            <div className="detail-item"><span>Atmospheric pressure</span><strong>{station.pressure} hPa</strong></div>
-            <div className="detail-item"><span>Rainfall</span><strong>{station.rainfall.toFixed(1)} mm</strong></div>
+            <div className="detail-item"><span>Temperature</span><strong>{station.hasReading ? `${station.temperature.toFixed(1)} °C` : '—'}</strong></div>
+            <div className="detail-item"><span>Humidity</span><strong>{station.hasReading ? `${station.humidity}%` : '—'}</strong></div>
+            <div className="detail-item"><span>Wind speed</span><strong>{station.hasReading ? `${station.wind.toFixed(1)} m/s` : '—'}</strong></div>
+            <div className="detail-item"><span>Atmospheric pressure</span><strong>{station.hasReading ? `${station.pressure} hPa` : '—'}</strong></div>
+            <div className="detail-item"><span>Rainfall</span><strong>{station.hasReading ? `${station.rainfall.toFixed(1)} mm` : '—'}</strong></div>
             <div className="detail-item"><span>Stored readings</span><strong>{station.readingsStored.toLocaleString()}</strong></div>
+            {station.dataSource && <div className="detail-item"><span>Latest reading source</span><strong>{station.dataSource === 'seeded-demo' ? 'Seeded demonstration' : station.dataSource === 'monitoring-simulation' ? 'Simulated monitoring' : 'Unverified ingest'}</strong></div>}
           </div>
         ) : (
           <form className="station-form" onSubmit={submit}>
@@ -49,7 +50,7 @@ function StationModal({ station, onClose, onAdd }) {
               <label>Longitude<input required type="number" step="any" min="-180" max="180" value={longitude} onChange={(event) => setLongitude(event.target.value)} placeholder="e.g. 11.4041" /></label>
             </div>
             <label>Logical region<select value={region} onChange={(event) => setRegion(event.target.value)}>{regionDefinitions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-            <p className="form-note">The new demo station will be added to the selected logical region.</p>
+            <p className="form-note">The new station will be saved to the configured database and assigned to the selected logical region.</p>
             <div className="modal-actions"><button type="button" className="button button-quiet" onClick={onClose}>Cancel</button><button type="submit" className="button button-primary">Add station</button></div>
           </form>
         )}

@@ -1,8 +1,25 @@
 import axios from 'axios'
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+  || (import.meta.env.PROD ? 'https://skyline-weather-monitor.onrender.com/api' : '/api')
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 5000,
+  baseURL: apiBaseUrl,
+  timeout: 60000,
+})
+
+api.interceptors.response.use(undefined, async (error) => {
+  const config = error.config
+  const method = config?.method?.toLowerCase()
+  const retryable = !error.response || error.code === 'ECONNABORTED' || error.response.status >= 500
+
+  if (method !== 'get' || !retryable || (config.__retryCount || 0) >= 1) {
+    throw error
+  }
+
+  config.__retryCount = (config.__retryCount || 0) + 1
+  await new Promise((resolve) => window.setTimeout(resolve, 1000))
+  return api.request(config)
 })
 
 export async function getHealth() {
@@ -61,12 +78,12 @@ export async function createSimulatedReadings(params = {}) {
 }
 
 export async function analyzeReadingQuery(params = {}) {
-  const { data } = await api.post('/readings/query', params, { timeout: 20000 })
+  const { data } = await api.post('/readings/query', params, { timeout: 60000 })
   return data.data
 }
 
 export async function compareReadingQueries(params = {}) {
-  const { data } = await api.post('/readings/benchmark', params, { timeout: 30000 })
+  const { data } = await api.post('/readings/benchmark', params, { timeout: 90000 })
   return data.data
 }
 

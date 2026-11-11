@@ -15,10 +15,9 @@ function round(value, digits = 1) {
 }
 
 async function getDashboardStats() {
-  const [stationCount, activeStations, stationSummaries, allReadingStats, activeAlerts] = await Promise.all([
+  const [stationCount, activeStations, allReadingStats, activeAlerts] = await Promise.all([
     WeatherStation.countDocuments(),
     WeatherStation.countDocuments({ status: { $ne: 'offline' } }),
-    getStationReadingSummaries(),
     getAllReadingStats(),
     WeatherAlert.countDocuments({ status: 'active' }),
   ])
@@ -35,6 +34,9 @@ async function getDashboardStats() {
       averageHumidity: 0,
       averageWindSpeed: 0,
       averageRainfall: 0,
+      seededDemoReadings: 0,
+      monitoringSimulationReadings: 0,
+      unverifiedReadings: 0,
       activeAlerts,
     }
   }
@@ -48,6 +50,9 @@ async function getDashboardStats() {
     averageHumidity: round(readingStats.averageHumidity),
     averageWindSpeed: round(readingStats.averageWindSpeed),
     averageRainfall: round(readingStats.averageRainfall),
+    seededDemoReadings: readingStats.seededDemoReadings || 0,
+    monitoringSimulationReadings: readingStats.monitoringSimulationReadings || 0,
+    unverifiedReadings: readingStats.unverifiedReadings || 0,
     activeAlerts,
   }
 }

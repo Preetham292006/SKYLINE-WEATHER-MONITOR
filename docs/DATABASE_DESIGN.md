@@ -43,9 +43,11 @@ offline), `createdAt`, and `updatedAt`.
 
 `stationId`, `region`, `temperature` (-100 to 80 °C), `humidity` (0-100%),
 `windSpeed` (0-200 m/s), `atmosphericPressure` (800-1200 hPa), `rainfall`
-(0-1000 mm), and `recordedAt`. `simulated` identifies generated monitoring
-records. The optional unique sparse `seedKey` makes seeded observations
-idempotent.
+(0-1000 mm), and `recordedAt`. `simulated` identifies generated records.
+`dataSource` distinguishes `seeded-demo`, `monitoring-simulation`, and
+`unverified-ingest`; the application does not claim that unverified ingest is
+authenticated physical sensor telemetry. The optional unique sparse `seedKey`
+makes seeded observations idempotent.
 
 The reading region is resolved from the station record. A supplied region must
 match; the client cannot route a station's observation to a different
@@ -154,13 +156,27 @@ shard key, call `shardCollection`, or claim to be a sharded cluster.
 
 ## Seed data and observed development data
 
-The idempotent seed script upserts 20 stations, 200 deterministic readings
-(50 per region), and five sample alerts. The test report records a development
-database with 201 readings because one previously generated simulated reading
-remained in the North collection: 51 North, 50 South, 50 East, and 50 West.
-That is an observed test-environment snapshot, not a seed-script output
-guarantee. The seed data and reported development counts are intentionally
-distinguished.
+`cd backend; npm run seed` inserts up to 12 demonstration stations (three per
+region), 120 time-stamped readings (30 per region), and five sample alerts.
+Seeded readings are marked `simulated: true` and
+`dataSource: "seeded-demo"`; they are not genuine sensor observations. A
+unique `seedKey` makes each sample reading repeatable. Existing station and
+alert records with matching IDs are preserved rather than overwritten, and
+the script does not delete records outside its seed keys. Existing seeded
+reading keys are only tagged with the seeded-demo provenance. Region
+definitions are held in `services/regionRouter.js`; they are not documents in
+a separate MongoDB region collection.
+
+`dataSource: "monitoring-simulation"` identifies generated monitoring values.
+`dataSource: "unverified-ingest"` identifies readings submitted through the
+general ingestion endpoint; without sensor authentication, these are not
+verified as coming from physical devices. Dashboard statistics report each
+category separately.
+
+The test report's historical counts describe the development database at the
+time its integration suite ran. They are not promises about the current
+configured database or the seed command's exact totals if other records
+already exist.
 
 The integration test suite uses a separate `skyline_weather_test` database.
 Its setup and teardown drop that test database; never configure the test URI to

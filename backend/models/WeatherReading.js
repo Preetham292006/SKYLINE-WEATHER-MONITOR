@@ -13,6 +13,11 @@ const weatherReadingSchema = new mongoose.Schema({
   rainfall: { type: Number, required: true, min: 0, max: 1000 },
   recordedAt: { type: Date, required: true, default: Date.now },
   simulated: { type: Boolean, default: false },
+  dataSource: {
+    type: String,
+    enum: ['unverified-ingest', 'monitoring-simulation', 'seeded-demo'],
+    default: 'unverified-ingest',
+  },
   seedKey: { type: String, trim: true },
 }, {
   timestamps: true,

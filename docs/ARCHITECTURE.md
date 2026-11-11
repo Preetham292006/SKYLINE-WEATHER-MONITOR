@@ -61,12 +61,12 @@ sequenceDiagram
 - `frontend/src/layouts/AppLayout.jsx` provides responsive navigation and shared application framing.
 - `frontend/src/pages/` contains Dashboard, Weather Stations, Live Monitoring, Regional Shards, Analytics, Geographical Analytics, Alerts, and Settings.
 - `frontend/src/components/` contains shared panels, metrics, charts, station table, and station modal UI.
-- `frontend/src/context/AppDataContext.jsx` loads shared station, alert, region, dashboard, and trend data; maps API data to the UI model; and maintains an explicitly labeled demo fallback.
+- `frontend/src/context/AppDataContext.jsx` loads shared station, alert, region, dashboard, and trend data from the API; maps responses to the UI model; and exposes loading and request-error states without replacing failed responses with sample weather records.
 - `frontend/src/services/api.js` is the HTTP client boundary. In development Vite proxies `/api` to the backend.
-- `frontend/src/data/mockData.js` contains fallback/demo data, not a persistence store.
+- `frontend/src/data/displayData.js` contains fixed region display metadata and formatting helpers, not weather readings.
 - Recharts renders analytical charts; Leaflet/React Leaflet dependencies are present for mapping interfaces.
 
-The theme preference is stored in browser local storage. Simulated monitoring is explicitly marked in the data and is not sensor telemetry.
+The theme preference is stored in browser local storage. Seeded demonstration, monitoring-generated simulation, and unverified-ingest readings have distinct provenance labels. The application does not assert that unverified ingest is genuine sensor telemetry.
 
 ## Backend architecture
 
@@ -149,7 +149,7 @@ The compound prefixes are used instead of redundant standalone `stationId` and `
 - CORS allows configured frontend origins, and JSON body size is limited.
 - Region keys are allowlisted; controllers construct explicit filters.
 - Database credentials are environment configuration, not frontend code.
-- The frontend's demo fallback is for display continuity and must not be confused with persisted database responses.
+- The frontend does not substitute bundled weather values for unavailable API data; error banners and empty states distinguish request failure from an empty database.
 
 ## Deployment boundary
 

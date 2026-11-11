@@ -156,7 +156,7 @@ function GeographicalAnalyticsPage() {
         <div><strong>Application-level query routing</strong><p>These are four logical collections in one MongoDB database—not a production sharded cluster. Timings are measured from this API and vary with indexes, cache state, dataset size, and hardware.</p></div>
       </div>
 
-      {source !== 'database' && <div className="query-inline-notice" role="status">MongoDB is not connected. Query analysis requires live database data; connect the backend and retry.</div>}
+      {source !== 'database' && <div className="query-inline-notice" role="status">{source === 'loading' ? 'Connecting to the configured MongoDB API. Query analysis will be available when the database is ready.' : 'The API did not return database data. Query analysis is unavailable until the request succeeds; no sample records are substituted.'}</div>}
       {error && <div className="query-inline-error" role="alert">{error}</div>}
 
       <Panel title="Regional distribution" subtitle="Collection sizes and station coverage from the connected database">

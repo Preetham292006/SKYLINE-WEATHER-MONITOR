@@ -14,6 +14,8 @@ function mapLatestReading(reading) {
     rainfall: reading.rainfall,
     recordedAt: reading.recordedAt,
     simulated: reading.simulated,
+    dataSource: reading.dataSource
+      || (reading.seedKey ? 'seeded-demo' : reading.simulated ? 'monitoring-simulation' : 'unverified-ingest'),
   }
 }
 

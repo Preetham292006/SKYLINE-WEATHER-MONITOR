@@ -83,7 +83,8 @@ async function createReading(req, res) {
     atmosphericPressure: req.body.atmosphericPressure,
     rainfall: req.body.rainfall,
     recordedAt: req.body.recordedAt ? new Date(req.body.recordedAt) : new Date(),
-    simulated: Boolean(req.body.simulated),
+    simulated: req.body.simulated === true,
+    dataSource: req.body.simulated === true ? 'monitoring-simulation' : 'unverified-ingest',
   })
   res.status(201).json({ data: reading })
 }
@@ -110,6 +111,7 @@ async function simulateReadings(req, res) {
     rainfall: randomBetween(0, 9),
     recordedAt: new Date(),
     simulated: true,
+    dataSource: 'monitoring-simulation',
   })))
   res.status(201).json({ simulated: true, data: readings, count: readings.length })
 }

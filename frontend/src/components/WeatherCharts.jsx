@@ -75,13 +75,15 @@ export function ReadingsChart({ data }) {
 }
 
 export function RegionalTemperatureChart({ regions }) {
-  const data = regions.map((region) => {
-    const readings = region.stationList || []
+  const data = regions.flatMap((region) => {
+    const readings = (region.stationList || []).filter((station) => station.hasReading)
+    const hasRegionalAverage = Number.isFinite(region.averageTemperature) && Number.isFinite(region.averageHumidity)
+    if (!hasRegionalAverage && !readings.length) return []
     const temperature = region.averageTemperature
-      ?? readings.reduce((total, station) => total + station.temperature, 0) / (readings.length || 1)
+      ?? readings.reduce((total, station) => total + station.temperature, 0) / readings.length
     const humidity = region.averageHumidity
-      ?? readings.reduce((total, station) => total + station.humidity, 0) / (readings.length || 1)
-    return { region: region.shortName || region.name.replace(' Region', ''), temperature: Number(temperature.toFixed(1)), humidity: Math.round(humidity) }
+      ?? readings.reduce((total, station) => total + station.humidity, 0) / readings.length
+    return [{ region: region.shortName || region.name.replace(' Region', ''), temperature: Number(temperature.toFixed(1)), humidity: Math.round(humidity) }]
   })
   if (!data.length) return <div className="chart-empty">No regional readings are available yet.</div>
   return (

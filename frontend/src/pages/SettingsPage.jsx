@@ -55,7 +55,7 @@ function SettingsPage() {
         </div>
         <aside className="settings-side">
           <div className="settings-side-card"><span className="side-card-icon"><UserRound size={18} /></span><h3>Workspace access</h3><p>Your role has access to station management, monitoring, and regional data views.</p><span className="access-role">Administrator</span></div>
-          <div className="settings-side-card"><span className="side-card-icon side-card-blue"><ShieldCheck size={18} /></span><h3>Data handling</h3><p>{source === 'database' ? 'Weather records are read from your configured MongoDB deployment. Simulated monitoring readings are clearly marked.' : 'MongoDB is unavailable. The dashboard is currently showing bundled sample data; changes are temporary until the database reconnects.'}</p><span className="access-role access-info">{source === 'database' ? 'MongoDB connected' : 'Local demo environment'}</span></div>
+          <div className="settings-side-card"><span className="side-card-icon side-card-blue"><ShieldCheck size={18} /></span><h3>Data handling</h3><p>{source === 'database' ? 'Weather records are read from the configured MongoDB deployment. Seeded demonstration and generated simulation readings are marked separately; unverified ingested records are not claimed as genuine sensor data.' : source === 'loading' ? 'Connecting to the configured MongoDB API. No bundled weather samples are substituted.' : 'The MongoDB API is unavailable. No bundled weather samples are displayed; retry the connection before making database changes.'}</p><span className="access-role access-info">{source === 'database' ? 'MongoDB connected' : source === 'loading' ? 'Connecting' : 'API unavailable'}</span></div>
         </aside>
       </div>
     </>

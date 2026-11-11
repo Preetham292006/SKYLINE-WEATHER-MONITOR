@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  activeStations as mockActiveStations,
-  alerts as initialAlerts,
-  getRegionStats,
-  getTrend,
-  regionDefinitions,
-  stations as initialStations,
-  totalReadings as mockTotalReadings,
-} from '../data/mockData.js'
+import { regionDefinitions } from '../data/displayData.js'
 import {
   createStation as createStationRequest,
   createSimulatedReadings,
@@ -22,10 +14,21 @@ import {
 } from '../services/api.js'
 import AppDataContext from './appData.js'
 
+const emptyRegions = regionDefinitions.map((region) => ({
+  ...region,
+  stationCount: 0,
+  activeCount: 0,
+  readings: 0,
+  averageTemperature: null,
+  averageHumidity: null,
+  status: 'No stations',
+  share: 0,
+}))
+
 function stationToClient(station) {
   const latest = station.latestReading || {}
   const recordedAt = latest.recordedAt ? new Date(latest.recordedAt) : null
-  const minutesAgo = recordedAt ? Math.max(0, Math.floor((Date.now() - recordedAt.getTime()) / 60_000)) : 0
+  const minutesAgo = recordedAt ? Math.max(0, Math.floor((Date.now() - recordedAt.getTime()) / 60_000)) : null
   return {
     id: station.stationId,
     name: station.stationName,
@@ -41,6 +44,8 @@ function stationToClient(station) {
     status: station.status,
     minutesAgo,
     lastReadingAt: latest.recordedAt || null,
+    hasReading: Boolean(latest.recordedAt),
+    dataSource: latest.dataSource,
     readingsStored: station.readingsStored || 0,
   }
 }
@@ -65,23 +70,26 @@ function apiErrorMessage(error) {
 }
 
 export function AppDataProvider({ children }) {
-  const [stations, setStations] = useState(initialStations)
-  const [alerts, setAlerts] = useState(initialAlerts)
-  const [regions, setRegions] = useState(getRegionStats())
+  const [stations, setStations] = useState([])
+  const [alerts, setAlerts] = useState([])
+  const [regions, setRegions] = useState(emptyRegions)
   const [stats, setStats] = useState({
-    totalStations: initialStations.length,
-    activeStations: mockActiveStations,
-    totalReadings: mockTotalReadings,
+    totalStations: 0,
+    activeStations: 0,
+    totalReadings: 0,
     regionCount: regionDefinitions.length,
     averageTemperature: 0,
     averageHumidity: 0,
     averageWindSpeed: 0,
     averageRainfall: 0,
+    seededDemoReadings: 0,
+    monitoringSimulationReadings: 0,
+    unverifiedReadings: 0,
   })
-  const [overview, setOverview] = useState({ recentStations: [], readingsTrend: getTrend() })
-  const [trends, setTrends] = useState(getTrend())
+  const [overview, setOverview] = useState({ recentStations: [], readingsTrend: [] })
+  const [trends, setTrends] = useState([])
   const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState('demo')
+  const [source, setSource] = useState('loading')
   const [loadError, setLoadError] = useState('')
   const [theme, setTheme] = useState(() => localStorage.getItem('skyline-theme') === 'slate' ? 'slate' : 'navy')
 
@@ -122,8 +130,8 @@ export function AppDataProvider({ children }) {
       setSource('database')
       setLoadError('')
     } catch (error) {
-      setSource('demo')
-      setLoadError(`${apiErrorMessage(error)} Showing sample data instead.`)
+      setSource('error')
+      setLoadError(apiErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -147,22 +155,10 @@ export function AppDataProvider({ children }) {
       setSource('database')
       setLoadError('')
       await refresh()
+      return true
     } catch (error) {
-      const regionLetter = details.region[0].toUpperCase()
-      setStations((current) => [...current, {
-        ...details,
-        id: `SKY-${regionLetter}-${5000 + current.length}`,
-        temperature: 20,
-        humidity: 60,
-        wind: 4,
-        pressure: 1012,
-        rainfall: 0,
-        status: 'online',
-        minutesAgo: 0,
-        readingsStored: 0,
-      }])
-      setSource('demo')
-      setLoadError(`${apiErrorMessage(error)} Station added to temporary demo data only.`)
+      setLoadError(`Station was not saved: ${apiErrorMessage(error)}`)
+      return false
     }
   }, [refresh])
 
@@ -175,26 +171,20 @@ export function AppDataProvider({ children }) {
       setStats((current) => ({ ...current, activeAlerts: Math.max(0, (current.activeAlerts || 1) - 1) }))
       setLoadError('')
     } catch (error) {
-      setAlerts((current) => current.map((alert) => alert.id === id ? { ...alert, resolved: true } : alert))
-      setSource('demo')
-      setLoadError(`${apiErrorMessage(error)} Alert resolution is temporary until the database is available.`)
+      setLoadError(`Alert was not resolved: ${apiErrorMessage(error)}`)
     }
   }, [])
 
   const resolveAllAlerts = useCallback(async () => {
     const activeAlerts = alerts.filter((alert) => !alert.resolved)
     if (source !== 'database') {
-      setAlerts((current) => current.map((alert) => ({ ...alert, resolved: true })))
+      setLoadError('Alerts were not changed because the database is unavailable.')
       return
     }
-    await Promise.all(activeAlerts.map(async (alert) => {
-      try {
-        await resolveAlertRequest(alert.id)
-      } catch (error) {
-        setLoadError(`${apiErrorMessage(error)} Some alert resolutions may not have been saved.`)
-      }
-    }))
+    const results = await Promise.allSettled(activeAlerts.map((alert) => resolveAlertRequest(alert.id)))
     await refresh()
+    const failures = results.filter((result) => result.status === 'rejected')
+    if (failures.length) setLoadError(`${failures.length} alert${failures.length === 1 ? '' : 's'} could not be resolved.`)
   }, [alerts, refresh, source])
 
   const value = useMemo(() => ({

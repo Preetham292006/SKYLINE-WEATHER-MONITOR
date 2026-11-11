@@ -74,8 +74,10 @@ Create reading payload:
 
 The API looks up the station and routes to its assigned collection. An optional
 `region` must match that station; client input never selects a MongoDB
-collection. Generated observations have `simulated: true` and are not sensor
-telemetry.
+collection. Generated observations have `simulated: true`. Reading responses
+include `dataSource`: `seeded-demo`, `monitoring-simulation`, or
+`unverified-ingest`. Dashboard statistics report per-source counts. The API does not authenticate physical sensor identity,
+so unverified ingest is not represented as confirmed sensor telemetry.
 
 ### Query analysis payloads
 
@@ -124,7 +126,7 @@ resets when the backend restarts.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/dashboard/stats` | Total/active stations, readings, region count, average weather values, and active alert count. |
+| GET | `/dashboard/stats` | Total/active stations, readings, region count, average weather values, active alert count, and `seededDemoReadings`, `monitoringSimulationReadings`, and `unverifiedReadings` counts. |
 | GET | `/dashboard/overview` | Recent stations with latest readings, regional aggregates, and 24-hour trend. |
 | GET | `/dashboard/trends` | Aggregated temperature, humidity, and reading-count trend; accepts `region`, `stationId`, and `range`. |
 
@@ -171,12 +173,15 @@ native sharding router.
 
 - The local development backend defaults to port `5000`; Vite proxies `/api`
   from its development server to `http://localhost:5000`.
+- For Vercel, set `VITE_API_BASE_URL` to the deployed Render API base ending in
+  `/api`; keep the MongoDB URI exclusively in the backend's Render environment.
 - `GET /health` may return HTTP `200` with `database` set to `connecting` or
   `disconnected`; this indicates HTTP service health, not database readiness.
   Database-backed endpoints return `503` until MongoDB is available.
-- The seed command is `cd backend; npm run seed`. It upserts 20 stations, 200
-  deterministic readings, and five alerts. Additional simulated readings can
-  change the live collection counts.
+- The seed command is `cd backend; npm run seed`. It safely inserts up to 12
+  demonstration stations, 120 readings tagged `dataSource: "seeded-demo"`, and
+  five sample alerts. It preserves pre-existing station/alert details and does
+  not delete application records.
 - `/readings/query-history` is an in-memory operational/demo history limited to
   the current backend process; it is not durable audit logging.
 - Query timing and explain metrics are observations from the configured

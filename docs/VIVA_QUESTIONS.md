@@ -26,7 +26,7 @@ The separation keeps HTTP routing, request handling, reusable business logic, an
 Axios calls `/api`; Vite proxies that path to the backend at `http://localhost:5000`.
 
 ### 8. What happens when MongoDB is unavailable?
-The health endpoint remains available and reports connection state; database-dependent routes return HTTP `503`. The frontend can show labeled demo fallback data.
+The health endpoint remains available and reports connection state; database-dependent routes return HTTP `503`. The frontend shows an API error or an empty database state and does not substitute bundled weather records.
 
 ## React and JavaScript
 
@@ -227,7 +227,7 @@ Nine backend integration tests passed and none failed in the recorded run agains
 It protects development data from destructive test setup and teardown. The integration suite uses `skyline_weather_test`.
 
 ### 71. What is simulated data?
-It is generated sample weather data, labeled `simulated: true`; it is not received from a physical sensor.
+It is generated sample weather data, labeled `simulated: true`. SKYLINE distinguishes seeded demonstrations (`dataSource: "seeded-demo"`) from monitoring-generated simulations; neither is a genuine physical sensor observation.
 
 ### 72. What are the main project limitations?
 The dataset is small, no physical sensors or native MongoDB sharding are configured, query history is in memory, and no separate frontend unit-test runner is currently configured.

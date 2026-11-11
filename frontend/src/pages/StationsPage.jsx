@@ -5,7 +5,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import Panel from '../components/Panel.jsx'
 import StationTable from '../components/StationTable.jsx'
 import StationModal from '../components/StationModal.jsx'
-import { regionDefinitions } from '../data/mockData.js'
+import { regionDefinitions } from '../data/displayData.js'
 import { useAppData } from '../hooks/useAppData.js'
 
 function StationsPage() {
@@ -27,9 +27,8 @@ function StationsPage() {
   const online = stations.filter((station) => station.status === 'online').length
   const warning = stations.filter((station) => station.status === 'warning').length
 
-  function handleAddStation(details) {
-    addStation(details)
-    setAdding(false)
+  async function handleAddStation(details) {
+    if (await addStation(details)) setAdding(false)
   }
 
   return (

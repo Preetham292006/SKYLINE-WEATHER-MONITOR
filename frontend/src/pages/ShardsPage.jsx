@@ -1,13 +1,12 @@
 import { ArrowDown, ArrowRight, CheckCircle2, Database, MapPin, Router, Server, Waypoints } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import Panel from '../components/Panel.jsx'
-import { formatCount, getRegionStats } from '../data/mockData.js'
+import { formatCount } from '../data/displayData.js'
 import { useAppData } from '../hooks/useAppData.js'
 
 function ShardsPage() {
-  const { stations, regions: databaseRegions, stats, source } = useAppData()
-  const regions = source === 'database' ? databaseRegions : getRegionStats(stations)
-  const totalReadings = source === 'database' ? stats.totalReadings : stations.reduce((total, station) => total + station.readingsStored, 0)
+  const { stations, regions, stats } = useAppData()
+  const totalReadings = stats.totalReadings
   return (
     <>
       <PageHeader eyebrow="CASE STUDY · DATA ARCHITECTURE" title="Regional data partitions" description="Follow weather readings from remote stations into their logical regional collections." actions={<span className="architecture-tag"><Database size={14} /> Logical partitioning</span>} />
@@ -31,7 +30,7 @@ function ShardsPage() {
       <div className="region-card-grid">
         {regions.map((region) => (
           <article className="region-card" key={region.id}>
-            <div className="region-card-header"><span className="region-symbol" style={{ color: region.color, background: `${region.color}16` }}><Database size={18} /></span><span className={`region-status ${region.status === 'Operational' ? 'region-ok' : 'region-degraded'}`}><i />{region.status}</span></div>
+            <div className="region-card-header"><span className="region-symbol" style={{ color: region.color, background: `${region.color}16` }}><Database size={18} /></span><span className={`region-status ${region.status === 'Operational' ? 'region-ok' : region.status === 'No stations' ? 'region-empty' : 'region-degraded'}`}><i />{region.status}</span></div>
             <p className="region-id">REGION_ID · {region.id.toUpperCase()}</p>
             <h2>{region.name}</h2>
             <code className="collection-name">{region.collection}</code>

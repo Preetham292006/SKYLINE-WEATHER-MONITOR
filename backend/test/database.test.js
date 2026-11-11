@@ -216,6 +216,33 @@ test('station CRUD, regional reading routing, dashboard analytics, and alert res
   assert.equal(stats.averageTemperature, 12.4)
   const trendResponse = await fetch(`${baseUrl}/dashboard/trends?range=24h`)
   assert.equal((await trendResponse.json()).count, 1)
+  const dashboardRoot = await fetch(`${baseUrl}/dashboard`)
+  const dashboardRootBody = await dashboardRoot.json()
+  assert.equal(dashboardRoot.status, 200)
+  assert.equal(dashboardRootBody.endpoints.stats, '/api/dashboard/stats')
+  const overviewResponse = await fetch(`${baseUrl}/dashboard/overview`)
+  assert.equal((await overviewResponse.json()).data.recentStations.length, 1)
+  const readingsResponse = await fetch(`${baseUrl}/readings?region=north`)
+  const readingsBody = await readingsResponse.json()
+  assert.equal(readingsBody.count, 1)
+  assert.equal(readingsBody.data[0].dataSource, 'unverified-ingest')
+  assert.equal(stats.seededDemoReadings, 0)
+  assert.equal(stats.monitoringSimulationReadings, 0)
+  assert.equal(stats.unverifiedReadings, 1)
+
+  const simulatedResponse = await fetch(`${baseUrl}/readings/simulate`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ stationId: 'SKY-N-TEST1' }),
+  })
+  const simulatedBody = await simulatedResponse.json()
+  assert.equal(simulatedResponse.status, 201)
+  assert.equal(simulatedBody.data[0].simulated, true)
+  assert.equal(simulatedBody.data[0].dataSource, 'monitoring-simulation')
+  const provenanceStats = (await (await fetch(`${baseUrl}/dashboard/stats`)).json()).data
+  assert.equal(provenanceStats.totalReadings, 2)
+  assert.equal(provenanceStats.monitoringSimulationReadings, 1)
+  assert.equal(provenanceStats.unverifiedReadings, 1)
 
   const alertResponse = await fetch(`${baseUrl}/alerts`, {
     method: 'POST',

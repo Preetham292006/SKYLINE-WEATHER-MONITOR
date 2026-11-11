@@ -118,7 +118,7 @@ and noisy local timings are not representative of a larger deployment.
 | Geographical analytics | Four region cards; routed/scatter, global, and multi-region queries/results and chart data rendered | PASS |
 | Global station search | Search found the expected station | PASS |
 | Theme persistence | Slate theme remained selected after page reload; reset to navy afterward | PASS |
-| Loading, offline fallback, and retry | Delayed health response showed the refresh indicator; offline response showed labeled fallback; clearing the test interception and retrying restored database data | PASS |
+| Historical loading/fallback/retry behavior (earlier frontend revision) | Delayed health response showed the refresh indicator; offline response showed labeled fallback; clearing the test interception and retrying restored database data | PASS |
 | Responsive layouts | Tested at 320, 390, 680, 768, 900, 1024, and 1280 px; no horizontal overflow | PASS |
 | Browser runtime | No page errors on stable route and interaction pass | PASS |
 
@@ -141,8 +141,8 @@ or isolated from the application and are recorded for transparency.
   either installed dependency tree at test time.
 - `.env` is ignored; the root, backend, and frontend environment example files
   contain configuration placeholders/defaults, not database credentials.
-- MongoDB connection strings are read from `MONGODB_URI`; no Atlas credential
-  was configured or exposed.
+- MongoDB connection strings are read from `MONGODB_URI`; no credential is
+  included in repository documentation or test output.
 - CORS allows configured frontend origins and does not enable credentialed
   cross-origin requests.
 - Region names are allowlisted; client input cannot select collection names.
@@ -157,11 +157,39 @@ or isolated from the application and are recorded for transparency.
 - Query history is in process memory and resets on API restart.
 - The project uses four logical collections in one database deployment; it
   does not configure MongoDB horizontal sharding, shard keys, or `mongos`.
-- Monitoring data is simulated; no physical station or Atlas deployment was
-  tested.
+- Monitoring data is simulated; physical sensor ingestion and production-scale
+  throughput have not been tested.
 - Browser verification was manual/Playwright-driven; no separate frontend unit
   test runner is currently configured.
 - The backend lint script is a Node syntax check, not a style linter.
+
+  ## Follow-up deployment and data validation
+
+  **Follow-up date:** 2026-11-11.
+
+  - A read-only count query against the configured `skyline_weather` database
+    found zero station documents, zero alert documents, and zero readings in all
+    four regional collections. Region definitions are static application
+    configuration, not MongoDB documents.
+  - `npm run seed` completed twice. Both runs reported 12 stations, 120 readings
+    (30 per region), and five alerts; the second run created no duplicates.
+    Dashboard provenance counts reported 120 seeded-demo records, zero
+    monitoring-generated records, and zero unverified-ingest records.
+  - All eight deployed Render GET endpoints were rechecked after seeding and
+    returned HTTP 200: health, stations, dashboard stats/overview/trends,
+    readings, regions, and alerts. Responses showed 12 stations, 120 readings,
+    three stations per region, and five alerts.
+  - The local updated API and frontend were run against the configured database.
+    Backend tests (9/9), backend syntax lint, frontend lint, and Vite production
+    build passed. The local browser dashboard displayed the API's 12 stations,
+    120 readings, source counts, and calculated weather averages with no
+    bundled-weather fallback.
+  - The currently deployed Vercel page also displayed the database-backed
+    12-station/120-reading results. It is an earlier frontend build and still
+    has legacy labels; the changed source files must be deployed to show the
+    revised provenance/error-state UI. The currently deployed Render process
+    also predates the new provenance-count fields and must be redeployed before
+    those API fields are available remotely.
 
 For capturing authentic page images for a submission, use the
 [screenshot checklist](SCREENSHOT_CHECKLIST.md). This report contains no

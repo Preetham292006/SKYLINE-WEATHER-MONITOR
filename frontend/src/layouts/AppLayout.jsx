@@ -5,7 +5,7 @@ import {
   MapPinned, Menu, Search, Settings, ShieldAlert, Waypoints, X,
 } from 'lucide-react'
 import { useAppData } from '../hooks/useAppData.js'
-import { regionDefinitions } from '../data/mockData.js'
+import { regionDefinitions } from '../data/displayData.js'
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -20,7 +20,7 @@ const navItems = [
 const initialClock = Date.now()
 
 function AppLayout() {
-  const { stations, alerts, theme, source, loadError, loading, refresh } = useAppData()
+  const { stations, alerts, stats, theme, source, loadError, loading, refresh } = useAppData()
   const [clock, setClock] = useState(initialClock)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -32,6 +32,11 @@ function AppLayout() {
   const page = navItems.find((item) => item.path === location.pathname)
   const title = page?.label || 'Settings'
   const offlineCount = stations.filter((station) => station.status === 'offline').length
+  const systemStatus = offlineCount
+    ? 'Network attention needed'
+    : source === 'database'
+      ? stations.length ? 'All systems operational' : 'No stations configured'
+      : source === 'loading' ? 'Connecting to database' : 'API unavailable'
   const results = useMemo(() => {
     const query = search.trim().toLowerCase()
     if (!query) return []
@@ -86,7 +91,7 @@ function AppLayout() {
         </div>
         <div className="sidebar-bottom">
           <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'nav-active' : ''}`} onClick={() => setMobileOpen(false)}><Settings size={18} /><span>Settings</span></NavLink>
-          <div className="sidebar-note"><span className="pulse-dot" />{offlineCount ? 'Network attention needed' : 'All systems operational'}<small>{stations.length - offlineCount}/{stations.length} reporting · {loading ? 'connecting' : source === 'database' ? 'MongoDB data' : 'demo data'}</small></div>
+          <div className="sidebar-note"><span className="pulse-dot" />{systemStatus}<small>{stations.length - offlineCount}/{stations.length} reporting · {loading ? 'connecting' : source === 'database' ? 'MongoDB data' : source === 'error' ? 'API unavailable' : 'waiting for API'}</small></div>
           <div className="profile-mini"><div className="avatar">JD</div><span><strong>Jordan Davis</strong><small>Administrator</small></span><ChevronDown size={15} /></div>
         </div>
       </aside>
@@ -101,7 +106,7 @@ function AppLayout() {
               {searchOpen && search && <div className="search-results">{results.length ? results.map((station) => <button key={station.id} onMouseDown={(event) => event.preventDefault()} onClick={() => selectStation(station)}><span className="station-avatar">{station.name[0]}</span><span><strong>{station.name}</strong><small>{station.id} · {station.city}</small></span></button>) : <div className="search-empty">No stations match “{search}”</div>}</div>}
             </div>
             <div className="topbar-popover-wrap">
-              <button className={`icon-button notification-button ${notificationsOpen ? 'button-selected' : ''}`} aria-label="Notifications" onClick={() => { setNotificationsOpen(!notificationsOpen); setSearchOpen(false) }}><Bell size={18} /><i /></button>
+              <button className={`icon-button notification-button ${notificationsOpen ? 'button-selected' : ''}`} aria-label="Notifications" onClick={() => { setNotificationsOpen(!notificationsOpen); setSearchOpen(false) }}><Bell size={18} />{pendingAlerts.length > 0 && <i />}</button>
               {notificationsOpen && <div className="notification-popover"><div className="popover-head"><strong>Notifications</strong><span>{pendingAlerts.length} new</span></div>{pendingAlerts.map((alert) => <div className="notification-item" key={alert.id}><i className={`severity-dot severity-${alert.severity}`} /><span><strong>{alert.title}</strong><small>{alert.stationName} · {alert.minutesAgo}m ago</small></span></div>)}<button className="popover-link" onClick={() => { navigate('/alerts'); setNotificationsOpen(false) }}>View all alerts</button></div>}
             </div>
             <div className="topbar-divider" />
@@ -109,9 +114,9 @@ function AppLayout() {
           </div>
         </header>
         <main className="page-content" onClick={() => { if (searchOpen) setSearchOpen(false) }}>
-          {loadError && <div className="data-status data-status-warning" role="status"><span><strong>{source === 'demo' ? 'Demo data active' : 'Data request failed'}</strong><small>{loadError}</small></span><button onClick={refresh} disabled={loading}>{loading ? 'Connecting…' : 'Retry connection'}</button></div>}
-          {!loadError && source === 'database' && <div className="data-status data-status-live"><span><strong>MongoDB connected</strong><small>Live application data · regional collections</small></span><i /> </div>}
-          {loading && <div className="data-loading" role="status"><span />Refreshing database data…</div>}
+          {loadError && <div className="data-status data-status-warning" role="alert"><span><strong>Backend request failed</strong><small>{loadError}</small></span><button onClick={refresh} disabled={loading}>{loading ? 'Connecting…' : 'Retry connection'}</button></div>}
+          {!loadError && source === 'database' && <div className="data-status data-status-live"><span><strong>MongoDB connected</strong><small>{stats.seededDemoReadings || stats.monitoringSimulationReadings ? `${stats.seededDemoReadings || 0} seeded demo · ${stats.monitoringSimulationReadings || 0} generated simulation · ${stats.unverifiedReadings || 0} unverified ingest` : 'Database records · source details available per reading'}</small></span><i /> </div>}
+          {loading && <div className="data-loading" role="status"><span />Connecting to database…</div>}
           <Outlet />
           <footer className="app-footer"><span>SKYLINE Weather Intelligence</span><span>Academic case study · logical regional partitioning</span></footer>
         </main>

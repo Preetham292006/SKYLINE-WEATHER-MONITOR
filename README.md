@@ -38,7 +38,8 @@ In a basic centralized design, all station readings may be placed in one collect
 - Geographical Analytics page for routed, scatter-gather, multi-region, and global query demonstrations.
 - Alerts list and resolution interaction.
 - Settings page and persistent UI theme preference.
-- Labeled demo-data fallback when the database is unavailable; API health remains available while database-dependent APIs return `503`.
+- Explicit loading, empty-database, and API error states; bundled weather samples are not substituted when API requests fail.
+- Reading provenance labels for seeded demonstration, monitoring-generated simulation, and unverified ingestion records.
 
 ## Technology stack
 
@@ -136,9 +137,11 @@ Copy-Item frontend\.env.example frontend\.env
 
 `backend/.env.example` contains `PORT`, `FRONTEND_ORIGIN`, `MONGODB_URI`, MongoDB selection timeout, and retry interval. For local MongoDB the example URI is `mongodb://127.0.0.1:27017/skyline_weather`. For Atlas, replace it with the private connection string and configure network access and a least-privilege database user. Do not commit credentials. `frontend/.env.example` uses `VITE_API_BASE_URL=/api`; Vite's development proxy targets the local backend.
 
+For production, set Render's `FRONTEND_ORIGIN` to `https://skyline-weather-monitor.vercel.app` and keep `MONGODB_URI` only in the backend environment. Set Vercel's `VITE_API_BASE_URL` to `https://skyline-weather-monitor.onrender.com/api` and redeploy the frontend after changing it. Never place `MONGODB_URI` in Vercel or frontend code.
+
 ## Seed and run
 
-Start MongoDB, then seed the database (safe to rerun; deterministic station and reading keys are upserted):
+Start MongoDB, then seed the database (safe to rerun; existing station, alert, and non-seed reading records are preserved):
 
 ```powershell
 cd backend
@@ -188,11 +191,12 @@ The recorded validation is **9 backend integration tests passed**, backend and f
 
 - Four logical collections are on one MongoDB database deployment; no MongoDB horizontal sharding, shard key, or `mongos` configuration is part of this project.
 - The seed dataset is small and cannot represent production throughput.
-- Live monitoring records are simulated, not received from physical sensors.
+- The seed command adds 12 demonstration stations, 120 clearly marked demonstration readings, and five sample alerts. These are not physical sensor observations.
+- Live-monitoring records are generated simulations, not received from physical sensors. Unverified ingestion records are not asserted to be genuine sensor data.
 - Query history is in process memory and resets when the API restarts.
-- UI fallback data is demonstration data and is labeled as such; it is not database persistence.
+- The four region definitions are application configuration; there is no separate MongoDB regions collection.
 - No standalone frontend unit-test runner is currently configured; browser interactions were validated separately.
-- Atlas deployment and production-scale performance were not tested.
+- The configured MongoDB deployment was reachable and seeded; production-scale throughput and performance were not tested.
 
 ## Future enhancements
 

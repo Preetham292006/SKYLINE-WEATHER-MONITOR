@@ -133,7 +133,7 @@ SKYLINE maintains station metadata and alerts separately and maps each station t
 5. Summarize station, reading, and weather information for dashboard pages.
 6. Create and resolve weather alerts.
 7. Compare routed and scatter-gather queries and display actual available metrics.
-8. Display loading, error, empty, connected, and labeled fallback states where implemented.
+8. Display loading, error, empty, and connected states without substituting bundled weather readings.
 
 ## 3.5 Non-functional requirements
 
@@ -248,6 +248,7 @@ erDiagram
     number rainfall
     datetime recordedAt
     boolean simulated
+    string dataSource
   }
   WEATHER_ALERT {
     string alertId PK
@@ -311,7 +312,7 @@ flowchart TD
 
 ## 5.1 React frontend
 
-`frontend/src/App.jsx` defines routes for the eight pages and lazy-loads each page inside a shared layout and data provider. `AppDataContext` requests health, stations, alerts, regional summaries, dashboard statistics, and trends. API responses are translated to view data. If MongoDB is not available, the UI uses labeled demo data. The API client is in `frontend/src/services/api.js`. Recharts is used for visualizations.
+`frontend/src/App.jsx` defines routes for the eight pages and lazy-loads each page inside a shared layout and data provider. `AppDataContext` requests health, stations, alerts, regional summaries, dashboard statistics, and trends. API responses are translated to view data. If the API is unavailable, the UI shows an error and does not substitute bundled weather records. The API client is in `frontend/src/services/api.js`. Recharts is used for visualizations.
 
 ## 5.2 Backend architecture
 
@@ -343,7 +344,7 @@ function getWeatherReadingModel(region) {
 }
 ```
 
-The seed script upserts 20 stations, 200 deterministic readings (50 in each region), and five alerts. The development database observed during testing had one additional simulated North reading, for 201 total; seed output and live database state are distinct.
+The current seed script safely inserts up to 12 demonstration stations (three per region), 120 time-stamped demonstration readings, and five sample alerts. Seeded readings are marked as simulated and carry `dataSource: "seeded-demo"`; they are not physical sensor observations. An earlier integration-test snapshot contained 20 stations and 201 readings under the then-current seed configuration. That historical test result is retained as a snapshot and is not the current seed baseline.
 
 ## 5.6 Geographic routing
 
@@ -377,7 +378,7 @@ This report does not include generated or fabricated screenshots. Capture the ru
 
 ## 6.2 Dashboard results
 
-Browser validation confirmed all eight application routes rendered expected headings. The connected development dataset contained 20 stations and 201 readings. Dashboard, trends, charts, and regional distribution were exercised against MongoDB-backed data. These figures are a test snapshot, not immutable project constants; the seeded baseline is 20 stations and 200 readings.
+Browser validation confirmed all eight application routes rendered expected headings. The development database snapshot at the time contained 20 stations and 201 readings. A later configured database inspection found it empty, and a fresh seed produced 12 stations, 120 seeded demonstration readings, and five alerts (three stations and 30 readings per region). Re-running the seed preserved these totals. These are observed database counts, not fixed production expectations.
 
 ## 6.3 Weather station results
 
@@ -427,7 +428,7 @@ The documented verification recorded:
 - Backend and frontend `npm audit` each reported 0 vulnerabilities at test time.
 - Four regional collections, index declarations, routing behavior, CRUD, alert resolution, aggregation, and persistence across backend restart were checked.
 - Database failure behavior was checked: the health endpoint remained available while data routes returned `503`.
-- Browser checks covered eight pages, station operations, alert resolution, monitoring filters/charts, query UI, theme persistence, loading/offline fallback/retry, and viewport widths 320–1280 px.
+- Earlier browser checks covered eight pages, station operations, alert resolution, monitoring filters/charts, query UI, theme persistence, and viewport widths 320–1280 px. The earlier fallback behavior was subsequently removed; current local browser validation confirmed database-backed 12-station/120-reading metrics without bundled sample records.
 
 Refer to [TESTING_REPORT.md](TESTING_REPORT.md) for case-by-case expected and actual results.
 

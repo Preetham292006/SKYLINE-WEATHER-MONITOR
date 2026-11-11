@@ -12,7 +12,9 @@ function buildRegionStats(region, stationCounts, readingStats) {
     readings: regionReadings?.readings || 0,
     averageTemperature: regionReadings?.averageTemperature ?? null,
     averageHumidity: regionReadings?.averageHumidity ?? null,
-    status: (stationCounts.offline.get(region.id) || 0) > 0 ? 'Degraded' : 'Operational',
+    status: stationCount === 0
+      ? 'No stations'
+      : (stationCounts.offline.get(region.id) || 0) > 0 ? 'Degraded' : 'Operational',
   }
 }
 
